@@ -5,12 +5,7 @@ import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 
 contract MockDEX {
-    function swapTokensForTokens(
-        ERC20 sellToken,
-        ERC20 buyToken,
-        uint256 sellAmount,
-        uint256 buyAmount
-    )
+    function swapTokensForTokens(ERC20 sellToken, ERC20 buyToken, uint256 sellAmount, uint256 buyAmount)
         external
         payable
     {
@@ -18,19 +13,21 @@ contract MockDEX {
         SafeTransferLib.safeTransfer(buyToken, msg.sender, buyAmount);
     }
 
-    function swapTokensForETH(ERC20 sellToken, uint256 sellAmount, uint256 buyAmount) external {
+    function swapTokensForEth(ERC20 sellToken, uint256 sellAmount, uint256 buyAmount) external {
         SafeTransferLib.safeTransferFrom(sellToken, msg.sender, address(this), sellAmount);
-        payable(msg.sender).call{ value: buyAmount }("");
+        (bool success,) = payable(msg.sender).call{ value: buyAmount }("");
+        require(success, "ETH_TRANSFER_FAILED");
     }
 
-    function swapETHForTokens(ERC20 buyToken, uint256 buyAmount) external payable {
+    function swapEthForTokens(ERC20 buyToken, uint256 buyAmount) external payable {
         SafeTransferLib.safeTransfer(buyToken, msg.sender, buyAmount);
     }
 
-    function swapPartialETHForTokens(ERC20 buyToken, uint256 buyAmount, uint256 remainingEth) external payable {
+    function swapPartialEthForTokens(ERC20 buyToken, uint256 buyAmount, uint256 remainingEth) external payable {
         SafeTransferLib.safeTransfer(buyToken, msg.sender, buyAmount);
         if (remainingEth > 0) {
-            payable(msg.sender).call{ value: remainingEth }("");
+            (bool success,) = payable(msg.sender).call{ value: remainingEth }("");
+            require(success, "ETH_TRANSFER_FAILED");
         }
     }
 }
