@@ -21,11 +21,7 @@ contract UnoRouter is BaseAggregator, Ownable {
     /// @dev Event emitted when ETH fees are withdrawn
     event EthWithdrawn(address indexed target, uint256 amount);
 
-    constructor(
-        address _owner,
-        address[] memory _swapTargets,
-        ISignatureTransfer _permit2
-    )
+    constructor(address _owner, address[] memory _swapTargets, ISignatureTransfer _permit2)
         Ownable(_owner)
         BaseAggregator(_permit2)
     {

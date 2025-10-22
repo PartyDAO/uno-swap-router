@@ -10,9 +10,9 @@ struct Permit2 {
 }
 
 contract Permit2Helper {
-    ISignatureTransfer public immutable permit2;
+    ISignatureTransfer public immutable PERMIT2;
 
     constructor(ISignatureTransfer _permit2) {
-        permit2 = _permit2;
+        PERMIT2 = _permit2;
     }
 }

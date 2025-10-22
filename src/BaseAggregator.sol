@@ -133,7 +133,7 @@ contract BaseAggregator is Permit2Helper, ReentrancyGuard {
         uint256 initialOutputTokenAmount = ERC20(buyTokenAddress).balanceOf(address(this));
 
         // 2 - Move the tokens to this contract (which includes our fees)
-        permit2.permitTransferFrom(
+        PERMIT2.permitTransferFrom(
             ISignatureTransfer.PermitTransferFrom({
                 permitted: ISignatureTransfer.TokenPermissions({ token: sellTokenAddress, amount: sellAmount }),
                 nonce: permit.nonce,
@@ -202,7 +202,7 @@ contract BaseAggregator is Permit2Helper, ReentrancyGuard {
         uint256 initialEthAmount = address(this).balance - msg.value;
 
         // 2 - Move the tokens to this contract
-        permit2.permitTransferFrom(
+        PERMIT2.permitTransferFrom(
             ISignatureTransfer.PermitTransferFrom({
                 permitted: ISignatureTransfer.TokenPermissions({ token: sellTokenAddress, amount: sellAmount }),
                 nonce: permit.nonce,
