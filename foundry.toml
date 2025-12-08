@@ -21,6 +21,11 @@ libs = ["node_modules"]
 fuzz = { runs = 10_000 }
 verbosity = 4
 
+[profile.coverage]
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+
 [etherscan]
 arbitrum = { key = "${ARBISCAN_API_KEY}" }
 avalanche = { key = "${SNOWTRACE_API_KEY}" }

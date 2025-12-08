@@ -34,6 +34,7 @@
     "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-    "test": "forge test -f $WORLDCHAIN_RPC_URL -vvv"
+    "test": "forge test -f $WORLDCHAIN_RPC_URL -vvv",
+    "test:coverage": "FOUNDRY_PROFILE=coverage forge coverage --ir-minimum --exclude-tests -f $WORLDCHAIN_RPC_URL"
   }
 }
