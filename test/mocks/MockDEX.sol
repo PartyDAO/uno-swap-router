@@ -5,7 +5,12 @@ import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 
 contract MockDEX {
-    function swapTokensForTokens(ERC20 sellToken, ERC20 buyToken, uint256 sellAmount, uint256 buyAmount)
+    function swapTokensForTokens(
+        ERC20 sellToken,
+        ERC20 buyToken,
+        uint256 sellAmount,
+        uint256 buyAmount
+    )
         external
         payable
     {
