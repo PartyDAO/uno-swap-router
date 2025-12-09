@@ -8,13 +8,14 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1",
     "@uniswap/permit2": "github:Uniswap/permit2",
     "solmate": "github:transmissions11/solmate"
   },
   "devDependencies": {
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",
     "prettier": "^3.0.0",
-    "solhint": "^3.6.2"
+    "solhint": "^6.0.1"
   },
   "keywords": [
     "blockchain",
@@ -29,9 +30,13 @@
   "scripts": {
     "clean": "rm -rf cache out",
     "build": "forge build",
-    "deploy": "forge script Deploy --chain world --rpc-url $WORLDCHAIN_RPC_URL --etherscan-api-key $WORLDSCAN_API_KEY --private-key $PRIVATE_KEY --verify --broadcast -vvv",
+    "deploy": "forge script Deploy --chain world --rpc-url $WORLDCHAIN_RPC_URL --etherscan-api-key $ETHERSCAN_API_KEY --private-key $PRIVATE_KEY --verify --broadcast -vvv",
     "lint": "bun run lint:sol && bun run prettier:check",
-    "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
+    "lint:sol": "bun run lint:src lint:test lint:script",
+    "lint:src": "solhint -c .solhint.src.json \"./src/**/*.sol\"",
+    "lint:test": "solhint -c .solhint.test.json \"./test/**/*.sol\"",
+    "lint:script": "solhint -c .solhint.script.json \"./script/**/*.sol\"",
+    "lint:fix": "forge fmt && bun run lint:src lint:test lint:script --fix --noPrompt",
     "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "test": "forge test -f $WORLDCHAIN_RPC_URL -vvv",

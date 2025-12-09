@@ -1,0 +1,18 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "code-complexity": "off",
+    "func-name-mixedcase": "off",
+    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "max-line-length": ["error", 124],
+    "named-parameters-mapping": "off",
+    "no-console": "off",
+    "not-rely-on-time": "off",
+    "max-states-count": "off",
+    "one-contract-per-file": "off",
+    "function-max-lines": "off",
+    "custom-errors": "off",
+    "no-inline-assembly": "off",
+    "no-empty-blocks": "off"
+  }
+}

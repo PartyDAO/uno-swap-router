@@ -1,0 +1,22 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "func-name-mixedcase": "off",
+    "immutable-vars-naming": "error",
+    "no-unused-import": "error",
+    "no-console": "off",
+    "func-visibility": "off",
+    "max-line-length": "off",
+    "max-states-count": "off",
+    "modifier-name-mixedcase": "error",
+    "private-vars-leading-underscore": "off",
+    "no-inline-assembly": "off",
+    "avoid-low-level-calls": "off",
+    "one-contract-per-file": "off",
+    "no-empty-blocks": "off",
+    "reason-string": "off",
+    "function-max-lines": "off",
+    "custom-errors": "off",
+    "state-visibility": "off"
+  }
+}

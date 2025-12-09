@@ -37,7 +37,7 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 optimism = { key = "${OPTIMISTIC_ETHERSCAN_API_KEY}" }
 polygon = { key = "${POLYGONSCAN_API_KEY}" }
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
-world = { key = "${WORLDSCAN_API_KEY}" }
+world = { key = "${ETHERSCAN_API_KEY}" }
 
 [fmt]
 bracket_spacing = true
