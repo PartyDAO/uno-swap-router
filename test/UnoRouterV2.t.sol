@@ -6,6 +6,7 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 import { ISignatureTransfer } from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 import { UnoRouterV2, SwapParams, FeeToken } from "../src/UnoRouterV2.sol";
 import { UnoRouter } from "../src/UnoRouter.sol";
@@ -15,6 +16,7 @@ import { MockDEX } from "./mocks/MockDEX.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
 import { MockERC4626 } from "./mocks/MockERC4626.sol";
 import { MockPermit2 } from "./mocks/MockPermit2.sol";
+import { MockUnoMorphoRouter } from "./mocks/MockUnoMorphoRouter.sol";
 
 contract UnoRouterV2Test is Test {
     address internal owner;
@@ -439,6 +441,90 @@ contract UnoRouterV2Test is Test {
         vm.stopPrank();
     }
 
+    function test_fillQuoteTokenToTokenAndDepositViaRouter_inputFee_success() public {
+        MockUnoMorphoRouter unoMorphoRouter = new MockUnoMorphoRouter(
+            IERC20(address(usdce)),
+            IERC4626(address(vault))
+        );
+
+        uint256 sellAmount = 10e18; // WLD
+        uint256 feeAmount = 1e18;
+        uint256 buyAmount = 10e6; // USDC (router asset)
+        bytes memory swapCallData = abi.encodeWithSignature(
+            "swapTokensForTokens(address,address,uint256,uint256)",
+            address(wld),
+            address(usdce),
+            sellAmount - feeAmount,
+            buyAmount
+        );
+        SwapParams memory params = SwapParams({
+            sellToken: IERC20(address(wld)),
+            buyToken: IERC20(address(usdce)),
+            target: payable(address(dex)),
+            swapCallData: swapCallData,
+            sellAmount: sellAmount,
+            feeToken: FeeToken.INPUT,
+            feeAmount: feeAmount
+        });
+        Permit2 memory permit = _makePermit(address(wld), sellAmount, 10);
+
+        uint256 sharesBefore = vault.balanceOf(user);
+
+        vm.startPrank(user);
+        uint256 shares = router.fillQuoteTokenToTokenAndDepositViaRouter(
+            params,
+            address(unoMorphoRouter),
+            user,
+            permit
+        );
+        vm.stopPrank();
+
+        assertEq(shares, buyAmount, "shares should equal deposited amount");
+        assertEq(unoMorphoRouter.lastCaller(), address(router), "router should call UnoMorphoRouter");
+        assertEq(unoMorphoRouter.lastReceiver(), user, "receiver should match");
+        assertEq(unoMorphoRouter.lastAssets(), buyAmount, "assets should match");
+        assertEq(vault.balanceOf(user), sharesBefore + buyAmount, "receiver gets vault shares");
+    }
+
+    function test_fillQuoteTokenToTokenAndDepositViaRouter_revert_invalidAsset() public {
+        MockUnoMorphoRouter unoMorphoRouter = new MockUnoMorphoRouter(
+            IERC20(address(wld)),
+            IERC4626(address(vault))
+        );
+
+        uint256 sellAmount = 10e18;
+        uint256 feeAmount = 1e18;
+        uint256 buyAmount = 10e6;
+        bytes memory swapCallData = abi.encodeWithSignature(
+            "swapTokensForTokens(address,address,uint256,uint256)",
+            address(wld),
+            address(usdce),
+            sellAmount - feeAmount,
+            buyAmount
+        );
+        SwapParams memory params = SwapParams({
+            sellToken: IERC20(address(wld)),
+            buyToken: IERC20(address(usdce)),
+            target: payable(address(dex)),
+            swapCallData: swapCallData,
+            sellAmount: sellAmount,
+            feeToken: FeeToken.INPUT,
+            feeAmount: feeAmount
+        });
+        Permit2 memory permit = _makePermit(address(wld), sellAmount, 11);
+
+        vm.startPrank(user);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                UnoRouterV2.InvalidDepositAsset.selector,
+                address(wld),
+                address(usdce)
+            )
+        );
+        router.fillQuoteTokenToTokenAndDepositViaRouter(params, address(unoMorphoRouter), user, permit);
+        vm.stopPrank();
+    }
+
     // ---------------------------------------------------------------------
     // Tests: existing function compatibility (no new events)
     // ---------------------------------------------------------------------
@@ -739,4 +825,3 @@ contract UnoRouterV2Test is Test {
         assertEq(dLegacy.userEth, dV2.userEth, "user eth delta");
     }
 }
-

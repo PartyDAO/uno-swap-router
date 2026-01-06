@@ -12,6 +12,12 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ISignatureTransfer } from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 import { Permit2Helper, Permit2 } from "./Permit2Helper.sol";
 
+interface IUnoMorphoRouter {
+    function ASSET() external view returns (address);
+    function VAULT() external view returns (address);
+    function deposit(uint256 assets, address receiver) external returns (uint256 shares);
+}
+
 /// @notice Token side used for fee collection.
 enum FeeToken {
     INPUT,
@@ -80,6 +86,8 @@ contract UnoRouterV2 is Initializable, Permit2Helper, ReentrancyGuardUpgradeable
     error AllowanceNotZero(address token, address target, uint256 allowance);
     error NoTokensReceived(address token);
     error FeeExceedsOutput();
+    error InvalidDepositAsset(address expected, address actual);
+    error ZeroRouter();
 
     modifier onlyApprovedTarget(address target) {
         if (!swapTargets[target]) revert TargetNotAuthorized(target);
@@ -353,6 +361,55 @@ contract UnoRouterV2 is Initializable, Permit2Helper, ReentrancyGuardUpgradeable
 
         params.buyToken.forceApprove(vault, tokensToDeposit);
         shares = IERC4626(vault).deposit(tokensToDeposit, receiver);
+
+        emit FillQuoteAndDeposit(address(params.buyToken), tokensToDeposit, receiver, vault);
+    }
+
+    /// @notice Swap ERC20->ERC20 and deposit into ERC4626 vault via UnoMorphoRouter.
+    /// @param params Swap parameters (sell/buy tokens, target, calldata, amounts, fee).
+    /// @param unoMorphoRouter UnoMorphoRouter address (token-specific).
+    /// @param receiver Recipient of vault shares.
+    /// @param permit Permit2 data.
+    /// @return shares Vault shares minted.
+    function fillQuoteTokenToTokenAndDepositViaRouter(
+        SwapParams calldata params,
+        address unoMorphoRouter,
+        address receiver,
+        Permit2 calldata permit
+    )
+        external
+        payable
+        nonReentrant
+        onlyApprovedTarget(params.target)
+        returns (uint256 shares)
+    {
+        if (unoMorphoRouter == address(0)) revert ZeroRouter();
+
+        (uint256 tokensSwapped, uint256 outputReceived) = _executeSwapWithPermit(params, permit);
+
+        emit FillQuoteTokenToToken(
+            address(params.sellToken),
+            address(params.buyToken),
+            msg.sender,
+            params.target,
+            tokensSwapped,
+            outputReceived,
+            params.feeToken,
+            params.feeAmount
+        );
+
+        if (params.feeToken == FeeToken.OUTPUT && params.feeAmount > outputReceived) revert FeeExceedsOutput();
+        uint256 tokensToDeposit =
+            params.feeToken == FeeToken.OUTPUT ? outputReceived - params.feeAmount : outputReceived;
+
+        address routerAsset = IUnoMorphoRouter(unoMorphoRouter).ASSET();
+        if (routerAsset != address(params.buyToken)) {
+            revert InvalidDepositAsset(routerAsset, address(params.buyToken));
+        }
+
+        address vault = IUnoMorphoRouter(unoMorphoRouter).VAULT();
+        params.buyToken.forceApprove(unoMorphoRouter, tokensToDeposit);
+        shares = IUnoMorphoRouter(unoMorphoRouter).deposit(tokensToDeposit, receiver);
 
         emit FillQuoteAndDeposit(address(params.buyToken), tokensToDeposit, receiver, vault);
     }
